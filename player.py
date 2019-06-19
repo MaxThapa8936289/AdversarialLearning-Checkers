@@ -18,7 +18,7 @@ import math
 # Initialisers: playstyle
 #
 
-COEFF = [200,-100,0,0,0,0,0,0,0,100]
+COEFF = [200,-100,0,0,0,3,2,0,0,10]
 
 class Player:
     def __init__(self,agent="random",name=None,delay=0):
@@ -69,6 +69,116 @@ class Player:
                 node.value = score
         if parent is None:
             return gameTree
+        
+    def calculateGameTreeWithMiniMax(self,board,coeff=COEFF,ply=3,parent=None):
+        return self._calculateGameTreeWithMaxMin(board=board,coeff=coeff,ply=ply,parent=parent)
+    
+    def _calculateGameTreeWithMaxMin(self,board,coeff=COEFF,ply=3,parent=None):
+        if parent is None:
+            gameTree = at.Node("root",value=-math.inf)
+            parent = gameTree
+        for move in board.getAvailableMoves():
+            node = at.Node(str(move),parent=parent,move=move,value=-math.inf)
+            next_board = b.move(board,move,show=False) 
+            if ply != 1:
+                self._calculateGameTreeWithMinMax(next_board,coeff,ply=ply-1,parent=node)
+            else:
+                score = next_board.feature_score(coeff)
+                node.value = score
+        values = [node.value for node in parent.children]
+        parent.value = max(values)
+        if parent.name == "root":
+            return gameTree
+    
+    def _calculateGameTreeWithMinMax(self,board,coeff=COEFF,ply=3,parent=None):
+        if parent is None:
+            gameTree = at.Node("root",value=-math.inf)
+            parent = gameTree
+        for move in board.getAvailableMoves():
+            node = at.Node(str(move),parent=parent,move=move,value=-math.inf)
+            next_board = b.move(board,move,show=False) 
+            if ply != 1:
+                self._calculateGameTreeWithMaxMin(next_board,coeff,ply=ply-1,parent=node)
+            else:
+                score = next_board.feature_score(coeff)
+                node.value = score
+        values = [node.value for node in parent.children]
+        parent.value = min(values)
+        if parent.name == "root":
+            return gameTree
+
+    def calculateGameTreeWithMiniMax2(self,board,coeff=COEFF,ply=3,parent=None):
+        return self._calculateGameTreeWithMaxMin2(board=board,coeff=coeff,ply=ply,parent=parent)
+    
+    def _calculateGameTreeWithMaxMin2(self,board,coeff=COEFF,ply=3,atRoot=True,thisNode=None,gameTree=None):
+        if atRoot:
+            gameTree = at.Node("root",value=-math.inf)
+            thisNode = gameTree
+        for move in board.getAvailableMoves():
+            child = at.Node(str(move),move=move,value=+math.inf)
+            child.parent = thisNode
+            next_board = b.move(board,move,show=False) 
+            if ply != 1:
+                try:
+                    self._calculateGameTreeWithMinMax2(next_board,coeff,ply=ply-1,atRoot=False,thisNode=child,gameTree=gameTree)
+                except(ValueError):
+                    break
+                except:
+                    raise RuntimeError("_calculateGameTreeWithMinMax2 experienced an error in execution")
+            else:
+                score = next_board.feature_score(coeff)
+                child.value = score
+                if score > thisNode.parent.value:
+                    thisNode.value = score
+                    break
+                if score > thisNode.value:
+                    thisNode.value = score
+                #print(at.RenderTree(gameTree))
+        if atRoot:
+            return gameTree
+        elif thisNode.parent.name != "root" and thisNode.value < thisNode.parent.parent.value:
+            thisNode.parent.value = thisNode.value
+            raise ValueError
+        elif thisNode.value < thisNode.parent.value:
+            thisNode.parent.value = thisNode.value
+        #print(at.RenderTree(gameTree))
+        return None
+            
+    
+    def _calculateGameTreeWithMinMax2(self,board,coeff=COEFF,ply=3,atRoot=True,thisNode=None,gameTree=None):
+        if atRoot:
+            gameTree = at.Node("root",value=+math.inf)
+            thisNode = gameTree
+        for move in board.getAvailableMoves():
+            child = at.Node(str(move),move=move,value=-math.inf)
+            child.parent = thisNode
+            next_board = b.move(board,move,show=False) 
+            if ply != 1:
+                try:
+                    self._calculateGameTreeWithMaxMin2(next_board,coeff,ply=ply-1,atRoot=False,thisNode=child,gameTree=gameTree)
+                except(ValueError):
+                    break
+                except:
+                    raise RuntimeError("_calculateGameTreeWithMaxMin2 experienced an error in execution")
+            else:
+                score = next_board.feature_score(coeff)
+                child.value = score
+                if score < thisNode.parent.value:
+                    thisNode.value = score
+                    break
+                if score < thisNode.value:
+                    thisNode.value = score
+                #print(at.RenderTree(gameTree))
+        if atRoot:
+            return gameTree
+        elif thisNode.parent.name != "root" and thisNode.value > thisNode.parent.parent.value:
+            thisNode.parent.value = thisNode.value
+            raise ValueError
+        elif thisNode.value > thisNode.parent.value:
+            thisNode.parent.value = thisNode.value
+        #print(at.RenderTree(gameTree))
+        return None
+        
     
     def makeMinimaxedMove(self,board):
         move = self.chooseMove(board)
