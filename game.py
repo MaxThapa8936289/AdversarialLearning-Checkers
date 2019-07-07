@@ -57,8 +57,8 @@ class Game:
             counter += 1
         return winner
 
-P1 = player.Player(delay=DELAY,agent="minimax")
-P2 = player.Player(delay=DELAY,agent="random")
+P1 = player.Player(delay=DELAY,agent="alphaBeta")
+P2 = player.Player(delay=DELAY,agent="minimax")
 wins_list = []
 for i in range(0,10):
     g = Game(P1=P1,P2=P2)
