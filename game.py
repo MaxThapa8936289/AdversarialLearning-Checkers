@@ -18,7 +18,7 @@ import time
 #
 
 GAME = True
-DELAY = 0
+DELAY = 2
 TURNS = 100
 
 
@@ -43,6 +43,7 @@ class Game:
                 current_player = self.P2                
             new_board = current_player.makeMove(self.current_board)
             turn = new_board.getTurn()
+            print(new_board.pos)
             self.current_board = copy(new_board)
             if counter == TURNS:
                 finished = True
@@ -60,7 +61,7 @@ class Game:
 P1 = player.Player(delay=DELAY,agent="alphaBeta")
 P2 = player.Player(delay=DELAY,agent="minimax")
 wins_list = []
-for i in range(0,10):
+for i in range(0,1):
     g = Game(P1=P1,P2=P2)
     wins_list.append(g.play())
 blk = wins_list.count("BLACK")

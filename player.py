@@ -18,7 +18,7 @@ from math import inf
 # Initialisers: playstyle
 #
 
-COEFF = [200,-100,0,0,0,3,2,0,0,10]
+COEFF = [100,-100,0,0,0,3,2,0,0,10]
 
 class Player:
     def __init__(self,agent="random",name=None,delay=0):
@@ -69,18 +69,22 @@ class Player:
             else:
                 score = next_board.feature_score(coeff)
                 node.value = score
+                #node.scores = b.CBBFunc.showFeatureScore(next_board,coeff)
         if parent is None:
             return gameTree
 
-    def constructAlphaBetaPrunedCheckersTree(self,board,coeff=COEFF,depth=3,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=False):
+    def constructAlphaBetaPrunedCheckersTree(self,board,coeff=COEFF,depth=2,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=True):
         if thisNode == None: # at root
-            thisNode = at.Node("root",value=-inf)
+            thisNode = at.Node("root")
         if depth == 0:
             thisNode.value = board.feature_score(coeff)
+            #thisNode.scores = b.CBBFunc.showFeatureScore(board,coeff)
             return None
         if maximising:
+            thisNode.value = -inf
             for move in board.getAvailableMoves():
-                child = at.Node(str(move),move=move,value=+inf)
+                child = at.Node('b'+str(move))
+                child.move = move
                 child.parent = thisNode
                 next_state = b.move(board,move,show=False) 
                 if next_state.turn != board.turn: # minimise oponent
@@ -90,12 +94,14 @@ class Player:
                 thisNode.value = max(child.value,thisNode.value)
                 alpha = max(child.value,alpha)
                 if showAlphaBeta:
-                    child.ab = (alpha,beta)
+                    thisNode.ab = (alpha,beta)
                 if alpha >= beta:
                     break
         else: # minimising
+            thisNode.value = +inf
             for move in board.getAvailableMoves():
-                child = at.Node(str(move),move=move,value=-inf)
+                child = at.Node('r'+str(move))
+                child.move = move
                 child.parent = thisNode
                 next_state = b.move(board,move,show=False) 
                 if next_state.turn != board.turn: # maximise self
@@ -105,7 +111,7 @@ class Player:
                 thisNode.value = min(child.value,thisNode.value)
                 beta = min(child.value,beta)
                 if showAlphaBeta:
-                    child.ab = (alpha,beta)
+                    thisNode.ab = (alpha,beta)
                 if alpha >= beta:
                     break
         if thisNode == thisNode.root:
