@@ -18,7 +18,7 @@ from math import inf
 # Initialisers: playstyle
 #
 
-COEFF = [100,-100,0,0,0,3,2,0,0,10]
+COEFF = [10000,100,-100,0,0,0,3,2,0,0,10]
 
 class Player:
     def __init__(self,agent="random",name=None,delay=0):
@@ -26,6 +26,23 @@ class Player:
         self.delay = delay
         self.agent = agent
         
+        if self.agent in ["random","minimax","alphaBeta"]:
+            self.coeff = COEFF
+        elif self.agent == "TDLearning":
+            try:
+                self.learned_params = np.loadtxt('TD_coeff.txt')
+            except IOError:
+                print("No file named 'TD_coeff.txt' found")
+                print("Initialising new learning parameters...")
+                self.learned_params = [1,10000,100,-100,0,0,0,3,2,0,0,10]
+                
+            self.eta_updates = self.learned_params[0]
+            self.coeff = self.learned_params[1:]
+            self.eta = 1/self.eta_updates
+        else:
+            raise ValueError("argument does not match a possible agent type: \
+                             'random' or 'minimax' or 'alphaBeta' or 'TDLearning'")
+            
     def getName(self):
         return self.name
     
@@ -36,13 +53,15 @@ class Player:
             return self.makeMinimaxedMove(board)
         elif self.agent == "alphaBeta":
             return self.makeAlphaBetaMove(board)
+        elif self.agent == "TDLearning":
+            return self.makeAlphaBetaMoveAndLearn(board)
         else:
             raise ValueError("argument does not match a possible agent type: \
-                             'random' or 'minimax' or 'alphaBeta'")
+                             'random' or 'minimax' or 'alphaBeta' or 'TDLearning'")
     
     def chooseMove(self,board):
         # Calculate game tree of boarde
-        gameTree = self.calculateGameTree(board,coeff=COEFF,ply=3)
+        gameTree = self.calculateGameTree(board,ply=3)
         # minimax tree
         minmax_gameTree = mnm.Minimax().minimax(gameTree)
         # search for matching nodes from children 
@@ -55,7 +74,7 @@ class Player:
         move = best_move_nodes[randindex].move
         return move
     
-    def calculateGameTree(self,board,coeff=COEFF,ply=3,parent=None):
+    def calculateGameTree(self,board,ply=3,parent=None):
         if parent is None:
             gameTree = at.Node("root",value=-inf)
         for move in board.getAvailableMoves():
@@ -65,20 +84,20 @@ class Player:
                 node = at.Node(str(move),parent=parent,move=move,value=-inf)
             next_board = b.move(board,move,show=False) 
             if ply != 1:
-                self.calculateGameTree(next_board,coeff,ply=ply-1,parent=node)
+                self.calculateGameTree(next_board,ply=ply-1,parent=node)
             else:
-                score = next_board.feature_score(coeff)
+                score = next_board.feature_score(self.coeff)
                 node.value = score
-                #node.scores = b.CBBFunc.showFeatureScore(next_board,coeff)
+                #node.scores = b.CBBFunc.showFeatureScore(next_board,self.coeff)
         if parent is None:
             return gameTree
 
-    def constructAlphaBetaPrunedCheckersTree(self,board,coeff=COEFF,depth=2,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=True):
+    def constructAlphaBetaPrunedCheckersTree(self,board,depth=2,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=True):
         if thisNode == None: # at root
             thisNode = at.Node("root")
         if depth == 0:
-            thisNode.value = board.feature_score(coeff)
-            #thisNode.scores = b.CBBFunc.showFeatureScore(board,coeff)
+            thisNode.value = board.feature_score(self.coeff)
+            #thisNode.scores = b.CBBFunc.showFeatureScore(board,self.coeff)
             return None
         if maximising:
             thisNode.value = -inf
@@ -140,6 +159,29 @@ class Player:
         # select random move from equally best scoring ones
         randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
         move = best_move_nodes[randindex].move
+        return b.move(board,move)
+
+    def makeAlphaBetaMoveAndLearn(self,board):
+        movetree = self.constructAlphaBetaPrunedCheckersTree(board)
+        # level 1 = root, level 2 = children. (may be multiple nodes)
+        best_move_nodes = at.search.findall_by_attr(movetree,
+                                                 movetree.value,
+                                                 name="value",maxlevel=2)
+        # select random move from equally best scoring ones
+        randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
+        move = best_move_nodes[randindex].move
+        new_state = b.move(board,move)
+        # Evauate and learn
+        prediction = board.feature_score(self.coeff)
+        target =  new_state.feature_score(self.coeff)
+        p_minus_t = prediction - target
+        gradient = b.CBBFunc.calculateFeatureVector(board,self.coeff)
+        new_coeff = self.coeff - self.eta*p_minus_t*gradient
+        self.coeff = new_coeff
+        print(self.coeff)
+        # Update Eta
+        self.eta_updates += 1
+        self.eta = 1/(self.eta_updates)
         return b.move(board,move)
         
         

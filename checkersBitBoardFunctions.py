@@ -277,12 +277,16 @@ def enemy_Range(board):
 ###############################################################################
 # BOARD FEATURE ANALYSIS ######################################################
 ###############################################################################
-def calculateFeatureScore(board,coeff):
-    fnList = [allied_material_score, enemy_material_score,
+def getFunctionList():
+    fnList = [game_won_lost_score, allied_material_score, enemy_material_score,
               advancement_score, apex_score, 
               back_row_bridge_score, centre_control_1_score,
               centre_control_2_score, double_corner_score,
               cramp_score, deny_score]
+    return fnList
+    
+def calculateFeatureScore(board,coeff):
+    fnList = getFunctionList()
     if len(coeff) != len(fnList):
         raise ValueError("length of coeff must match number of functions in fnList")
     else:
@@ -292,11 +296,7 @@ def calculateFeatureScore(board,coeff):
         return score
 
 def showFeatureScore(board,coeff):
-    fnList = [allied_material_score, enemy_material_score,
-              advancement_score, apex_score, 
-              back_row_bridge_score, centre_control_1_score,
-              centre_control_2_score, double_corner_score,
-              cramp_score, deny_score]
+    fnList = getFunctionList()
     if len(coeff) != len(fnList):
         raise ValueError("length of coeff must match number of functions in fnList")
     else:
@@ -304,6 +304,28 @@ def showFeatureScore(board,coeff):
         for i in range(len(fnList)):
             score.append(coeff[i]*fnList[i](board))
         return score     
+    
+def calculateFeatureVector(board,coeff):
+    fnList = [game_won_lost_score, allied_material_score, enemy_material_score,
+              advancement_score, apex_score, 
+              back_row_bridge_score, centre_control_1_score,
+              centre_control_2_score, double_corner_score,
+              cramp_score, deny_score]
+    if len(coeff) != len(fnList):
+        raise ValueError("length of coeff must match number of functions in fnList")
+    else:
+        featureVector = []
+        for i in range(len(fnList)):
+            featureVector.append(fnList[i](board))
+        return np.array(featureVector)
+    
+def game_won_lost_score(board):
+    if allied_material_score(board) == 0:
+        return -1 # game lost
+    elif enemy_material_score(board) == 0:
+        return 1 # game won
+    else:
+        return 0
     
 def allied_material_score(board):
     return bin(board.allies).count('1')

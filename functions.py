@@ -5,6 +5,7 @@
 #   only piece locations are represented
 #   the colour will depend on context
 import numpy as np
+from re import search
 
 # DEPRECIATED
 #def diagonaliseBits(bit_int,length):
@@ -16,6 +17,22 @@ import numpy as np
 #    elements = [2**i for i in range(0,length)]
 #    diagonal = [e & bit_int for e in elements]
 #    return diagonal
+
+def extractFunctionNameFromStrPointer(text):
+    """ Extracts the function name from the output of str(function) 
+    > text = str(some_function) 
+    > print(text)
+    >   '<function some_function at 0x0000000000000000>'
+    > function_name = ExtractFunctionNameFromStrPointer(text)
+    > print(function_name)
+    >   'some_function'
+    """
+    try:
+        found = search('<function (.+?) at', text).group(1)
+    except AttributeError:
+        # '<function ', ' at' not found in the original string
+        found = '' # apply error handling
+    return found
     
 def revbits(x,size=32):
     """ Reverses the bits of an integer of size (default is 32) """

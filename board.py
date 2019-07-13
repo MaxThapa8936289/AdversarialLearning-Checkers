@@ -125,7 +125,7 @@ def is_square(sq):
 #    return new_board
 
 
-def move(board,move,show=False):
+def move(board,move,show=True):
     """ Returns a new board object after making the move on the given board
     """
     # Functionality:
@@ -224,7 +224,7 @@ class Board:
     def getTurn(self):
         return self.turn    
     
-    def display(self,trueNums=False):
+    def display(self,trueNums=False,showMoves=False):
         # Displays the board and the available moves
         temp = self.pos*self.turn
         disp = np.zeros((64), dtype=np.int32)
@@ -238,11 +238,12 @@ class Board:
             plt.show()
             print('\n')
             print("%s's turn" % turn_to_string(self.turn))
-            print("Moves available for this turn: ")
-            print(self.availableMoves)
-            print("All moves including illegal ones: ")
-            print(self.simpleMoves)
-            print(self.jumps)
+            if showMoves:
+                print("Moves available for this turn: ")
+                print(self.availableMoves)
+                print("All moves including illegal ones: ")
+                print(self.simpleMoves)
+                print(self.jumps)
             
     def change_sides(self):
         self.pos = -1*self.pos
