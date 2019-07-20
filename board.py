@@ -17,7 +17,15 @@ import checkersBitBoardFunctions as CBBFunc
 
 # Colour map for board display
 cmap = ListedColormap(['#e04b35','#c41900','#f2f2f2','k','#424242'])
-
+# Square numbers for board display 
+square_numbers = []
+for n in range(0,32):
+    square_numbers.append(str(32-n))
+    square_numbers.append('')
+square_numbers = np.array(square_numbers)    
+square_numbers = square_numbers.reshape(8,8)
+square_numbers[::2] = np.roll(square_numbers[::2],1,axis=1)
+                       
 # Default position array
 START_POS = np.array([-1,-1,-1,-1,
                       -1,-1,-1,-1,
@@ -41,14 +49,14 @@ JUMP_TEST2 = np.array([0,0,0,0,
                       0,0,2,0,
                       0,0,-1,0,
                       0,0,0,0,
-                      2,0,0,0,
+                      0,0,0,0,
                       -2,0,-1,0,
                       0,0,0,0])
 MINIMAX_TEST = np.array([0,-1,0,0,
                       0,0,0,0,
                       0,-1,-1,0,
                       0,0,0,0,
-                      0,-1,0,0,
+                      0,0,0,0,
                       0,1,0,0,
                       0,0,0,0,
                       1,0,0,0])
@@ -216,13 +224,13 @@ class Board:
         self.empty = CBBFunc.NOT35bit(self.allies | self.enemies) & CBBFunc.SQRS
     
     def getSimpleMoves(self):
-        return self.simpleMoves
+        return copy(self.simpleMoves)
     def getJumps(self):
-        return self.jumps
+        return copy(self.jumps)
     def getAvailableMoves(self):
-        return self.availableMoves
+        return copy(self.availableMoves)
     def getTurn(self):
-        return self.turn    
+        return copy(self.turn)
     
     def display(self,trueNums=False,showMoves=False):
         # Displays the board and the available moves
@@ -235,6 +243,8 @@ class Board:
             print(disp*self.turn)
         else:
             plt.matshow(disp, cmap = cmap, vmin = -2, vmax = +2)
+            for (i, j), z in np.ndenumerate(square_numbers):
+                plt.text(j, i, z, ha='center', va='center', color='#c7c7c7')
             plt.show()
             print('\n')
             print("%s's turn" % turn_to_string(self.turn))

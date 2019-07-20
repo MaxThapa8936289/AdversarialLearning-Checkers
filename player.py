@@ -4,6 +4,8 @@ import time
 import anytree as at
 import minimax as mnm
 from math import inf
+from re import search
+import sys
 
 # Player Class for Checkers game
 #   A class to emulate a player in the game of checkers. This class will
@@ -18,7 +20,7 @@ from math import inf
 # Initialisers: playstyle
 #
 
-COEFF = [10000,100,-100,0,0,0,3,2,0,0,10]
+COEFF = [100,-100,0,0,0,3,2,0,0,10]
 
 class Player:
     def __init__(self,agent="random",name=None,delay=0):
@@ -26,7 +28,7 @@ class Player:
         self.delay = delay
         self.agent = agent
         
-        if self.agent in ["random","minimax","alphaBeta"]:
+        if self.agent in ["random","minimax","alphaBeta","human"]:
             self.coeff = COEFF
         elif self.agent == "TDLearning":
             try:
@@ -34,14 +36,14 @@ class Player:
             except IOError:
                 print("No file named 'TD_coeff.txt' found")
                 print("Initialising new learning parameters...")
-                self.learned_params = [1,10000,100,-100,0,0,0,3,2,0,0,10]
+                self.learned_params = [1,0,0,0,0,0,0,0,0,0,0]
                 
             self.eta_updates = self.learned_params[0]
             self.coeff = self.learned_params[1:]
             self.eta = 1/self.eta_updates
         else:
             raise ValueError("argument does not match a possible agent type: \
-                             'random' or 'minimax' or 'alphaBeta' or 'TDLearning'")
+                             'random' or 'minimax' or 'alphaBeta' 'human' or 'TDLearning'")
             
     def getName(self):
         return self.name
@@ -53,6 +55,8 @@ class Player:
             return self.makeMinimaxedMove(board)
         elif self.agent == "alphaBeta":
             return self.makeAlphaBetaMove(board)
+        elif self.agent == "human":
+            return self.makeHumanMove(board)
         elif self.agent == "TDLearning":
             return self.makeAlphaBetaMoveAndLearn(board)
         else:
@@ -162,7 +166,11 @@ class Player:
         return b.move(board,move)
 
     def makeAlphaBetaMoveAndLearn(self,board):
+        # start tracking passed time
+        t = time.time()
+        # Construct the tree of moves to consider
         movetree = self.constructAlphaBetaPrunedCheckersTree(board)
+        # extract best move
         # level 1 = root, level 2 = children. (may be multiple nodes)
         best_move_nodes = at.search.findall_by_attr(movetree,
                                                  movetree.value,
@@ -170,19 +178,82 @@ class Player:
         # select random move from equally best scoring ones
         randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
         move = best_move_nodes[randindex].move
-        new_state = b.move(board,move)
+        new_state = b.move(board,move,show=False)
         # Evauate and learn
         prediction = board.feature_score(self.coeff)
-        target =  new_state.feature_score(self.coeff)
+        reward = b.CBBFunc.game_end_reward(new_state)
+        future_estimate = new_state.feature_score(self.coeff)
+        target = reward + future_estimate
         p_minus_t = prediction - target
         gradient = b.CBBFunc.calculateFeatureVector(board,self.coeff)
+        # print result for debugging
+        print("prediction: ", prediction)
+        print("target: " , reward, " + ", future_estimate)
+        print("weights: ", self.coeff)
+        print("gradient/feature vector: ", gradient)
+        print("update increment: ", self.eta*p_minus_t*gradient )
+        # TD-Learning update
         new_coeff = self.coeff - self.eta*p_minus_t*gradient
-        self.coeff = new_coeff
+        if(not np.array_equal(new_coeff,self.coeff)): # non-trivial update
+            # Update Eta
+            print("updating eta!")
+            self.eta_updates += 1
+            self.eta = 1/(self.eta_updates)
+            self.coeff = new_coeff
         print(self.coeff)
-        # Update Eta
-        self.eta_updates += 1
-        self.eta = 1/(self.eta_updates)
+        # print move choice for human player to read
+        printMove = b.f.posMovesToSquaresMoves(move)
+        print("%s makes move: %d to %d" % (b.turn_to_string(board.turn),printMove[0],printMove[1]))
+        # slow down turn
+        sleepTime = self.delay - (time.time() - t)
+        if sleepTime > 0:
+            time.sleep(sleepTime)
         return b.move(board,move)
+    
+    def makeHumanMove(self,board):
+        print("The available moves for this turn are:")
+        availableMoves = b.f.posMovesToSquaresMoves(board.getAvailableMoves())
+        for item in availableMoves:
+            print(item[0], " to ", item[1])
+        validMove = False
+        while validMove is False:
+            moveStr = input("Please select a move by entering a pair of numbers 'xx yy', representing the move from square xx to yy: ")
+            move = np.array([[0,0]])
+            try:
+                if moveStr == "exit":
+                    raise SystemExit("Requested 'exit'. Ending program...")
+                if len(moveStr) < 3:
+                    raise ValueError('Insufficient length')
+                move0 = search(r'^([0-9]|[0-9][0-9])\b',moveStr).group(1)
+                move1 = search(r'\b([0-9]|[0-9][0-9])$',moveStr).group(1)
+                move[0][0] = int(move0)
+                move[0][1] = int(move1)
+
+                if move[0].tolist() not in availableMoves.tolist():
+                    raise ValueError('Illegal move')
+                
+                print("Move Accepted")
+                move = b.f.squaresMovesToPosMoves(move)
+                print(move)
+                validMove = True
+                
+            except AttributeError:
+                print("Sorry, the move was not valid. Please check for typos and try again...")
+            except ValueError as ValErr:
+                arg = ValErr.args
+                if arg[0] == 'Insufficient length':
+                    print("Sorry, the move entered was not valid. Please enter a pair of numbers.")
+                if arg[0] == 'Illegal move':
+                    print("Sorry but that move is not legal. Please choose from the list of available moves this turn:")
+                    for item in availableMoves:
+                        print(item[0], " to ", item[1])
+        return b.move(board,move[0])
+                
+                
+    
+        
+        
+    
         
         
 

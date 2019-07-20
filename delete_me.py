@@ -1,19 +1,29 @@
+import board as b
+import player as p
 import numpy as np
-import board
-updates = 0
 
-for function in board.CBBFunc.getFunctionList():
-    function_names = []
-    print(board.f.extractFunctionNameFromStrPointer(str(function)))
-    function_names.append(board.f.extractFunctionNameFromStrPointer(str(function)))
-function_names = function_names[1:]
-weights = P1.coeff[1:]
-print(function_names)
-print(weights)
+A = np.array([[2,3],[10,21],[30,33]])
+B = np.array([[11,17]])
+C = np.array([11,19])
+D = [10,21]
+E = [[10,21],[22,30]]
 
-for i in range(0,10):
-    new_eta = np.random.randint(1,4)
-    eta = 1/(updates+1)
-    updates +=1
-    print(eta)
-    print(updates)
+tests = [A,B,C,D,E]
+squares = []
+
+for t in tests:
+    print(t)
+    
+print("\n")    
+
+for example in tests:
+    squareExample = b.f.posMovesToSquaresMoves(example)
+    squares.append(squareExample)
+    print(squareExample)
+
+print("\n")
+
+for example in squares:
+    posExample = b.f.squaresMovesToPosMoves(example)
+    print(posExample)
+    

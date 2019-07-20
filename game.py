@@ -17,7 +17,7 @@ import time
 #
 
 GAME = True
-DELAY = 2
+DELAY = 1
 TURNS = 100
 
 
@@ -25,7 +25,7 @@ class Game:
     def __init__(self,P1=player.Player(delay=DELAY,agent="minimax"),P2=player.Player(delay=DELAY,agent="minimax"),start_pos=board.START_POS):
         self.P1 = P1
         self.P2 = P2
-        self.current_board = board.Board(start_pos)
+        self.current_board = board.Board(start_pos,show=True)
         self.board_history = []
     
     def play(self):
@@ -60,13 +60,13 @@ class Game:
 
 np.set_printoptions(linewidth=200,precision=2)
 
-P1 = player.Player(delay=DELAY,agent="TDLearning")
-P2 = player.Player(delay=DELAY,agent="alphaBeta")
+P1 = player.Player(delay=DELAY,agent="alphaBeta")
+P2 = player.Player(delay=DELAY,agent="TDLearning")
 wins_list = []
 for i in range(0,1):
     g = Game(P1=P1,P2=P2)
     wins_list.append(g.play())
-learned_params = np.append(P1.eta_updates,P1.coeff)
+learned_params = np.append(P2.eta_updates,P2.coeff)
 np.savetxt('TD_coeff.txt',learned_params,delimiter=',')
 
 
@@ -88,8 +88,7 @@ plt.figure(2)
 function_names = []
 for function in board.CBBFunc.getFunctionList():
     function_names.append(board.f.extractFunctionNameFromStrPointer(str(function)))
-function_names = function_names[1:]
-weights = P1.coeff[1:]
+weights = P1.coeff
 plt.title("Player 1: Parameters")
 plt.bar(function_names,weights)
 plt.xticks(rotation='vertical')
@@ -100,8 +99,7 @@ plt.figure(3)
 function_names = []
 for function in board.CBBFunc.getFunctionList():
     function_names.append(board.f.extractFunctionNameFromStrPointer(str(function)))
-function_names = function_names[1:]
-weights = P2.coeff[1:]
+weights = P2.coeff
 plt.title("Player 2: Parameters")
 plt.bar(function_names,weights)
 plt.xticks(rotation='vertical')

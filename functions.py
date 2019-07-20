@@ -6,6 +6,7 @@
 #   the colour will depend on context
 import numpy as np
 from re import search
+from copy import copy
 
 # DEPRECIATED
 #def diagonaliseBits(bit_int,length):
@@ -33,6 +34,30 @@ def extractFunctionNameFromStrPointer(text):
         # '<function ', ' at' not found in the original string
         found = '' # apply error handling
     return found
+
+def posMovesToSquaresMoves(movesList):
+    """ Converts a numpy array of moves in checkers 'pos-space' (i.e. numbered from 
+    1 to 35, skipping multiples of 9) to 'squares-space' which is the standard
+    checkers numbering system (1 to 32). Is the inverse of squaresMovesToPosMoves()
+    """
+    movesList = np.array(movesList)
+    temp = copy(movesList)
+    movesList[temp>27] -= 3
+    movesList[(27>temp)&(temp>18)] -= 2
+    movesList[(18>temp)&(temp>9)] -= 1
+    return movesList
+
+def squaresMovesToPosMoves(movesList):
+    """ Converts a numpy array of moves in checkers 'pos-space' (i.e. numbered from 
+    1 to 35, skipping multiples of 9) to 'squares-space' which is the standard
+    checkers numbering system (1 to 32). Is the inverse of squaresMovesToPosMoves()
+    """
+    movesList = np.array(movesList)
+    temp = copy(movesList)
+    movesList[temp>24] += 3
+    movesList[(24>=temp)&(temp>16)] += 2
+    movesList[(16>=temp)&(temp>8)] += 1
+    return movesList
     
 def revbits(x,size=32):
     """ Reverses the bits of an integer of size (default is 32) """
