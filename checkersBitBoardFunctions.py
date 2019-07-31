@@ -3,7 +3,6 @@ import numpy as np
 ###############################################################################
 # BITBOARD CONSTANTS ##########################################################
 ###############################################################################
-SQUARES = np.array([s for s in range (35,-1,-1) if s%9 !=0])
 # Bit-board representations #
 # Valid squares on the board
 SQRS = 0b11111111011111111011111111011111111
@@ -87,38 +86,58 @@ def boolPosToBin(pos):
     pos = np.insert(pos,[8,16,24],False)
     return int(''.join(map(str, 1*pos)),2)
 
-def binToSqaures(x):
-    """ Converts 35bit int for use with the Board class to a list of tile 
-    numbers corresponding to the positions of the bits
-    """
-    arr = binToBoolPos(x)
-    arr = arr*SQUARES
-    arr = arr[arr!=0]
+def boolPos2ToBin(pos):
+    """ Converts a board.pos boolean np.array to a binary number """
+    return int(''.join(map(str, 1*pos)),2)
+
+def binToBoolPos2(x):
+    """ Converts binary int to np.array of the same format as board.pos2"""
+    arr = [int(d) for d in str(bin(x))[2:]]
+    len_dif = 35 - len(arr)
+    if len_dif < 0:
+        raise ValueError("Binary value too long for board")
+    arr = np.array([0]*len_dif + arr)
+    arr = arr.astype(int)
     return arr
 
-def squaresToBin(tileList):
-    """ Converts a list of tile numbers to a 35bit int with '1' in the 
-    corresponding positions (for use with the Board class)
-    """
-    tmp = [0]*35
-    try:
-        # try as list (intended)
-        for tile in tileList:
-            tmp[-tile] = 1
-    except TypeError:
-        # try as scalar
-        tmp[-tileList] = 1
-    return int(''.join(map(str, 1*tmp)),2)
+# DEPRECIATED
+#def binToSqaures(x):
+#    """ Converts 35bit int for use with the Board class to a list of tile 
+#    numbers corresponding to the positions of the bits
+#    """
+#    arr = binToBoolPos(x)
+#    arr = arr*SQUARES
+#    arr = arr[arr!=0]
+#    return arr
+#
+#def squaresToBin(tileList):
+#    """ Converts a list of tile numbers to a 35bit int with '1' in the 
+#    corresponding positions (for use with the Board class)
+#    """
+#    tmp = [0]*35
+#    try:
+#        # try as list (intended)
+#        for tile in tileList:
+#            tmp[-tile] = 1
+#    except TypeError:
+#        # try as scalar
+#        tmp[-tileList] = 1
+#    return int(''.join(map(str, 1*tmp)),2)
 
 def randomPos():
     """ Returns a randomly generated position array """
-    a = binToBoolPos(np.random.randint(0,34359738367,dtype='int64')&SQRS)
-    b = binToBoolPos(np.random.randint(0,34359738367,dtype='int64')&SQRS)
-    c = binToBoolPos(np.random.randint(0,34359738367,dtype='int64')&SQRS)
-    d = binToBoolPos(np.random.randint(0,34359738367,dtype='int64')&SQRS)
-    x = a+b
-    y = c+d
-    return x-y
+    a = binToBoolPos2(np.random.randint(0,34359738367,dtype='int64')&SQRS)
+    b = binToBoolPos2(np.random.randint(0,34359738367,dtype='int64')&SQRS)
+    c = binToBoolPos2(np.random.randint(0,34359738367,dtype='int64')&SQRS)
+    d = binToBoolPos2(np.random.randint(0,34359738367,dtype='int64')&SQRS)
+    x = a+b # black pieces (overlap produces kings)
+    y = c+d # red pieces (overlap produces kings)
+    z = x - y # overall positions (overlap demotes pieces)
+    # reduce density by 50%
+    indices = np.random.choice(np.arange(z.size), replace=False,
+                           size=int(z.size * 0.5))
+    z[indices] = 0
+    return z
 
 ###############################################################################
 # ALLIED MOVES ################################################################

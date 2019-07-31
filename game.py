@@ -1,4 +1,4 @@
-import board
+import board as board
 import player
 from copy import copy
 import numpy as np
@@ -17,7 +17,7 @@ import time
 #
 
 GAME = True
-DELAY = 1
+DELAY = 0
 TURNS = 100
 
 
@@ -60,13 +60,13 @@ class Game:
 
 np.set_printoptions(linewidth=200,precision=2)
 
-P1 = player.Player(delay=DELAY,agent="alphaBeta")
-P2 = player.Player(delay=DELAY,agent="TDLearning")
+P1 = player.Player(delay=DELAY,agent="TDLearning")
+P2 = player.Player(delay=DELAY,agent="alphaBeta")
 wins_list = []
 for i in range(0,1):
     g = Game(P1=P1,P2=P2)
     wins_list.append(g.play())
-learned_params = np.append(P2.eta_updates,P2.coeff)
+learned_params = np.append(P1.eta_updates,P1.coeff)
 np.savetxt('TD_coeff.txt',learned_params,delimiter=',')
 
 

@@ -5,7 +5,6 @@ import anytree as at
 import minimax as mnm
 from math import inf
 from re import search
-import sys
 
 # Player Class for Checkers game
 #   A class to emulate a player in the game of checkers. This class will
@@ -202,7 +201,7 @@ class Player:
             self.coeff = new_coeff
         print(self.coeff)
         # print move choice for human player to read
-        printMove = b.f.posMovesToSquaresMoves(move)
+        printMove = b.f.posMovesToReadMoves(move)
         print("%s makes move: %d to %d" % (b.turn_to_string(board.turn),printMove[0],printMove[1]))
         # slow down turn
         sleepTime = self.delay - (time.time() - t)
@@ -212,7 +211,7 @@ class Player:
     
     def makeHumanMove(self,board):
         print("The available moves for this turn are:")
-        availableMoves = b.f.posMovesToSquaresMoves(board.getAvailableMoves())
+        availableMoves = b.f.posMovesToReadMoves(board.getAvailableMoves())
         for item in availableMoves:
             print(item[0], " to ", item[1])
         validMove = False
@@ -233,7 +232,7 @@ class Player:
                     raise ValueError('Illegal move')
                 
                 print("Move Accepted")
-                move = b.f.squaresMovesToPosMoves(move)
+                move = b.f.readMovesToPosMoves(move)
                 print(move)
                 validMove = True
                 

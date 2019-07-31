@@ -35,9 +35,24 @@ def extractFunctionNameFromStrPointer(text):
         found = '' # apply error handling
     return found
 
-def posMovesToSquaresMoves(movesList):
+def rowIn2dMatrix(matrix,row):
+    try:
+        return (matrix==row).all(axis=1).any()
+    except AttributeError:
+        if (len(matrix) == 0):
+            return False
+        if (len(row) == 0):
+            raise AttributeError("Lenght of 'row' object cannot be zero")
+        else:
+            raise
+
+def posArrayToReadArray(posArray):
+    readArray = np.delete(posArray,[8,17,26])
+    return readArray
+
+def posMovesToReadMoves(movesList):
     """ Converts a numpy array of moves in checkers 'pos-space' (i.e. numbered from 
-    1 to 35, skipping multiples of 9) to 'squares-space' which is the standard
+    1 to 35, skipping multiples of 9) to 'read-space' which is the standard
     checkers numbering system (1 to 32). Is the inverse of squaresMovesToPosMoves()
     """
     movesList = np.array(movesList)
@@ -47,9 +62,9 @@ def posMovesToSquaresMoves(movesList):
     movesList[(18>temp)&(temp>9)] -= 1
     return movesList
 
-def squaresMovesToPosMoves(movesList):
+def readMovesToPosMoves(movesList):
     """ Converts a numpy array of moves in checkers 'pos-space' (i.e. numbered from 
-    1 to 35, skipping multiples of 9) to 'squares-space' which is the standard
+    1 to 35, skipping multiples of 9) to 'read-space' which is the standard
     checkers numbering system (1 to 32). Is the inverse of squaresMovesToPosMoves()
     """
     movesList = np.array(movesList)

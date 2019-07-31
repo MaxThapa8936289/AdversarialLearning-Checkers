@@ -1,0 +1,40 @@
+The initial large problem for investigating the binary analysis was that, regardless of who's turn it was, the material score was returning the same value for allies. This quantity should of course depend on the turn.
+
+While investigating the board state program, I have found a possible clue. 
+For example, consider a board state where the current turn is black's.
+When a move is made, the program converts the turn in 2 ways.
+1) it explicitly initialises the new board object with the RED turn constant.
+2) it call's change_sides(), which multiplies the pos array by -1. 
+This means that the previous pos array, e.g. [ 0, 1, 0,-1,..., 0, 0, 0, 0] 
+				      is now [ 0,-1, 0, 1,..., 0, 0, 0, 0].
+This array then has to be converted to binary representation. On red's turn, the array is flipped:
+np.flip( [ 0,-1, 0, 1,..., 0, 0, 0, 0] )
+      =  [ 0, 0, 0, 0,..., 1, 0,-1, 0]
+this actually seems correct...
+though certainly a bit convoluted.
+
+What would be nice is to have a single method that both changes the 'side' and the turn.
+Note: mostly, change_sides() is misnamed. Though it must be called when changing sides, the function does not change sides completely.
+
+The times when it is necessary to change sides are:
+- after making a move
+
+the issue is if one attempts to initialise the board at red's turn without calling change_sides(), it will initialise incorrectly, which is not intuitive at all. 
+
+The cases are:
+red's turn,    factor 1    - after a red jump, it's still red's turn, but the array will have already been flipped.
+red's turn,    factor -1   - after black's final move. The turn changes. Also if initialising on red's turn.
+black's turn,  factor 1	   - after a black jump, or when initialising to black's turn.
+black's turn,  factor -1   - after red's final move, the turn changes, so the pos array must be unflipped.
+
+Not an easy way out, bacuse of other factors. I must ask: why is the pos array multiplied by a factor?
+1) When calculating the moves: allied men are located by the pos values equal to 1. similar for kings.
+3) When determining the occupation of a square, it is compared to static values.
+2) When calculating the binary foramts, the same as above is also true.
+
+All of the above can be altered with the intorduction of the turn constant in the right places. Although it may appear cluttered to repeatedly be using the turn constant everywhere, it is definitely far more intuitive, and pretty much the exact reason the turn constant exists.
+
+This will create a new paradigm where the pos array is not required to be multiplied by any factor at any point. The turn constant should handle everything. 
+This means we can remove change_sides and the changing_sides() functions. Initialisation of states on red's turn should work correctly.
+
+
