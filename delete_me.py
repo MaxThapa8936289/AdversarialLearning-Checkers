@@ -1,17 +1,15 @@
 import board as b
 import numpy as np
 
-total_blacks = 0
-total_reds = 0
-iters = 100
-for i in range(0,iters):
-    A = b.Board(pos=b.CBBFunc.randomPos())
-    total_blacks += b.CBBFunc.allied_material_score(A)
-    total_reds += b.CBBFunc.enemy_material_score(A)
-
-print("Ratio of black to red is %f" % (total_blacks/total_reds))
-
-
+A = b.Board()
+A.display()
+B = b.move(A,b.f.readMovesToPosMoves([11,15]))
+A = b.move(B,b.f.readMovesToPosMoves([23,18]))
+B = b.move(A,b.f.readMovesToPosMoves([7,11]))
+A = b.move(B,b.f.readMovesToPosMoves([21,17]))
+B = b.move(A,b.f.readMovesToPosMoves([10,14]))
+A = b.move(B,b.f.readMovesToPosMoves([17,10]))
+print(b.f.posMovesToReadMoves(A.availableMoves))
     
 
 

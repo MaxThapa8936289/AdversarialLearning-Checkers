@@ -1,0 +1,17 @@
+Seems i still dont understand the algortihm...
+
+one semi-reputabe source says the states that are visited by the agent are the states to be updating on. therefore only the board states upon which it is the agent's turn are relevant to update.
+This will standardise the evaluation function at least, but intuitively it seems like a waste of usable information...
+Furthermore, it requires a special case of programming for a loss, in which case the agent never gets a last turn to 'realise' it's loss.
+
+I have read about some alternate algorithms, TD(lambda) and also TDLeaf(lambda). TDLeaf(lambda) seems interesting as it 'combines' minimax and TD learning to improve on the learning. The results of the paper https://arxiv.org/pdf/cs/9901001.pdf are compelling. 
+
+However, these readings beg many questions for my program.
+What is exactly IS my agent getting out of minimax?
+How does the difference in weights between the opponent and the agent effect the minimax algorithm?
+	-> What happens to the minimax algorithm when the oponent plays differently than expected?
+	-> How does that effect learning?
+What is the difference between learning on every single state and learning on only agent owned states?
+Which seems to make more sense?
+
+I think comparing only states visited by the agent is correct. Lets try to implement this.

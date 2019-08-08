@@ -298,7 +298,7 @@ def enemy_Range(board):
 ###############################################################################
     
 def game_end_reward(board):
-    reward_multiplier = 1000
+    reward_multiplier = 1
     if allied_material_score(board) == 0:
         return -1*reward_multiplier # game lost
     elif enemy_material_score(board) == 0:

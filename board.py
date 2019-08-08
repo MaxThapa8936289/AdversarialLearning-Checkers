@@ -143,6 +143,15 @@ JUMP_TEST =         np.array([   -1,    0,    0,    0,
                                1,    0,   -1,    1,    0,
                                   1,    1,    1,    1,
                                1,    0,    1,    1     ])
+# END_TEST is for debugging game end behaviour.
+END_TEST =          np.array([   0,    0,    0,    0,
+                               0,    0,    0,    0,    0,
+                                  0,    0,    0,    0,
+                               0,   -1,    0,   -1,    0,
+                                  0,    0,    0,    0,
+                               0,    0,    1,    0,    0,
+                                  0,    0,    0,    0,
+                               0,    0,    0,    0     ])
 
 
 
@@ -151,7 +160,7 @@ JUMP_TEST =         np.array([   -1,    0,    0,    0,
 # with calculations. For the benefit of making the code more readable, these
 # constants are used in the code.
 BLACK = 1
-RED = -1 
+RED = -1
 
 def turn_to_string(turn):
     """ Converts a turn constant to a string.
@@ -217,10 +226,12 @@ def move(board,move,show=True):
         new_pos = copy(board.pos)
         new_pos[-move[0]] = 0
         if (board.is_king_ally(move[0]) or move[1] in KINGS_ROW[board.turn]):
-            new_pos[-move[1]] = 2
+            # assign the new position the piece type
+            # multiply by turn to get the correct colour.
+            new_pos[-move[1]] = 2*board.turn 
         else:
-            new_pos[-move[1]] = 1
-        new_board = Board(new_pos,turn=-1*board.turn,changing_sides=True,show=False)
+            new_pos[-move[1]] = 1*board.turn
+        new_board = Board(new_pos,turn=-1*board.turn,show=False)
         if show==True:
             new_board.display()
         return new_board
@@ -230,21 +241,21 @@ def move(board,move,show=True):
         new_pos[-move[0]] = 0
         new_pos[-captured] = 0
         if (board.is_king_ally(move[0])):
-            new_pos[-move[1]] = 2
+            new_pos[-move[1]] = 2*board.turn
             crowning_event = False
         elif (board.is_man_ally(move[0]) and move[1] in KINGS_ROW[board.turn]):
-            new_pos[-move[1]] = 2
+            new_pos[-move[1]] = 2*board.turn
             crowning_event = True
         else:
-            new_pos[-move[1]] = 1
+            new_pos[-move[1]] = 1*board.turn
             crowning_event = False
     
-        new_board = Board(new_pos,turn=board.turn,changing_sides=False,show=False)
+        new_board = Board(new_pos,turn=board.turn,show=False)
         if (new_board.jumps.size != 0 and (move[1] in new_board.jumps[:,0]) and (not crowning_event)):
             new_board.availableMoves = \
             new_board.jumps[tuple([move[1] == new_board.jumps[:,0]])]
         else:
-            new_board = Board(new_pos,turn=-1*board.turn,changing_sides=True,show=False)
+            new_board = Board(new_pos,turn=-1*board.turn,show=False)
         if show==True:
             new_board.display()
         return new_board
@@ -277,7 +288,7 @@ class Board:
     about the game state can be derived from the positions of the pieces on the 
     board, the current player's turn, and the legal moves available.
     """
-    def __init__(self,pos=START_POS,turn=BLACK,changing_sides=False,show=False):
+    def __init__(self,pos=START_POS,turn=BLACK,show=False):
         """ Initialiser function for the Board class. 
         pos (np.array of integers, length 35) - An array of integers, in the 
             range[-2,-1,0,1,2], where negative integers are the enemy pieces, 
@@ -287,8 +298,6 @@ class Board:
             Default is the game setup for a standard game.
         turn (int, either 1 or -1) - 1 corresponds to black's turn. 
             -1 corresponds to red's turn.
-        changing_sides (boolean) - if True, calls self.change_sides() on 
-            object creation.
         show (boolean) - if True, calls self.display() on object creation.
         
         When the object is created, the pos array is also converted to binary 
@@ -297,9 +306,6 @@ class Board:
             
         self.pos = copy(pos)
         self.turn = turn
-        if changing_sides:
-            self.change_sides()
-            
         self.simpleMoves, self.jumps = self._getMoves()
         if self.jumps.size != 0:
             self.availableMoves = copy(self.jumps)
@@ -313,12 +319,12 @@ class Board:
             relative_pos = np.flip(pos) 
         if turn == BLACK:
             relative_pos = pos
-        self.allied_men = CBBFunc.boolPos2ToBin(relative_pos==1)
-        self.allied_kings = CBBFunc.boolPos2ToBin(relative_pos==2)
+        self.allied_men = CBBFunc.boolPos2ToBin(relative_pos==1*self.turn)
+        self.allied_kings = CBBFunc.boolPos2ToBin(relative_pos==2*self.turn)
         self.allies = self.allied_men | self.allied_kings
         
-        self.enemy_men = CBBFunc.boolPos2ToBin(relative_pos==-1)
-        self.enemy_kings = CBBFunc.boolPos2ToBin(relative_pos==-2)
+        self.enemy_men = CBBFunc.boolPos2ToBin(relative_pos==-1*self.turn)
+        self.enemy_kings = CBBFunc.boolPos2ToBin(relative_pos==-2*self.turn)
         self.enemies = self.enemy_men | self.enemy_kings
         
         self.empty = CBBFunc.NOT35bit(self.allies | self.enemies) & CBBFunc.SQRS
@@ -334,7 +340,7 @@ class Board:
     
     def display(self,trueNums=False,showMoves=False):
         # Displays the board and the available moves
-        temp = f.posArrayToReadArray(self.pos)*self.turn
+        temp = f.posArrayToReadArray(self.pos)
         disp = np.zeros((64), dtype=np.int32)
         disp[::2] = temp
         disp = disp.reshape(8,8)
@@ -354,9 +360,6 @@ class Board:
                 print("All moves including illegal ones: ")
                 print(self.simpleMoves)
                 print(self.jumps)
-            
-    def change_sides(self):
-        self.pos = -1*self.pos
         
     def occupation_of(self, sq):
         if is_square(sq):
@@ -366,13 +369,13 @@ class Board:
     def is_empty(self,sq):
         return self.occupation_of(sq) in [0]
     def is_enemy(self,sq):
-        return self.occupation_of(sq) in [-1,-2]
+        return self.occupation_of(sq) in [x*self.turn for x in [-1,-2]]
     def is_ally(self,sq):
-        return self.occupation_of(sq) in [1,2]
+        return self.occupation_of(sq) in [x*self.turn for x in [1,2]]
     def is_king_ally(self,sq):
-        return self.occupation_of(sq) in [2]
+        return self.occupation_of(sq) in [2*self.turn]
     def is_man_ally(self,sq):
-        return self.occupation_of(sq) in [1]
+        return self.occupation_of(sq) in [1*self.turn]
         
     def _getMoves(self):
         """ Returns an ndarray of move doublets
@@ -386,8 +389,8 @@ class Board:
         moves = []
         jumps = []
         # Get a list of squares occupied by men and kings
-        men = 35 - np.flatnonzero(self.pos == 1)
-        kings = 35 - np.flatnonzero(self.pos == 2)
+        men = 35 - np.flatnonzero(self.pos == 1*self.turn)
+        kings = 35 - np.flatnonzero(self.pos == 2*self.turn)
         for m in men:
             for _,right_left in f.range_of_man(m,piece_colour=self.turn).items():
                 if is_square(right_left["slide"]):

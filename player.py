@@ -57,26 +57,11 @@ class Player:
         elif self.agent == "human":
             return self.makeHumanMove(board)
         elif self.agent == "TDLearning":
-            return self.makeAlphaBetaMoveAndLearn(board)
+            return self.makeAlphaBetaMove(board)
         else:
             raise ValueError("argument does not match a possible agent type: \
                              'random' or 'minimax' or 'alphaBeta' or 'TDLearning'")
-    
-    def chooseMove(self,board):
-        # Calculate game tree of boarde
-        gameTree = self.calculateGameTree(board,ply=3)
-        # minimax tree
-        minmax_gameTree = mnm.Minimax().minimax(gameTree)
-        # search for matching nodes from children 
-        # level 1 = root, level 2 = children. (may be multiple nodes)
-        best_move_nodes = at.search.findall_by_attr(minmax_gameTree,
-                                                 minmax_gameTree.value,
-                                                 name="value",maxlevel=2)
-        # select random move from equally best scoring ones
-        randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
-        move = best_move_nodes[randindex].move
-        return move
-    
+        
     def calculateGameTree(self,board,ply=3,parent=None):
         if parent is None:
             gameTree = at.Node("root",value=-inf)
@@ -148,23 +133,22 @@ class Player:
         return b.move(board,availableMoves[move_index])
     
     def makeMinimaxedMove(self,board):
-        move = self.chooseMove(board)
-        time.sleep(self.delay)
-        #print("making minimaxed move")
-        return b.move(board,move)
-    
-    def makeAlphaBetaMove(self,board):
-        movetree = self.constructAlphaBetaPrunedCheckersTree(board)
+        # Calculate game tree of boarde
+        gameTree = self.calculateGameTree(board,ply=3)
+        # minimax tree
+        minmax_gameTree = mnm.Minimax().minimax(gameTree)
+        # search for matching nodes from children 
         # level 1 = root, level 2 = children. (may be multiple nodes)
-        best_move_nodes = at.search.findall_by_attr(movetree,
-                                                 movetree.value,
+        best_move_nodes = at.search.findall_by_attr(minmax_gameTree,
+                                                 minmax_gameTree.value,
                                                  name="value",maxlevel=2)
         # select random move from equally best scoring ones
         randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
         move = best_move_nodes[randindex].move
+        time.sleep(self.delay)
         return b.move(board,move)
 
-    def makeAlphaBetaMoveAndLearn(self,board):
+    def makeAlphaBetaMove(self,board):
         # start tracking passed time
         t = time.time()
         # Construct the tree of moves to consider
@@ -177,29 +161,6 @@ class Player:
         # select random move from equally best scoring ones
         randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
         move = best_move_nodes[randindex].move
-        new_state = b.move(board,move,show=False)
-        # Evauate and learn
-        prediction = board.feature_score(self.coeff)
-        reward = b.CBBFunc.game_end_reward(new_state)
-        future_estimate = new_state.feature_score(self.coeff)
-        target = reward + future_estimate
-        p_minus_t = prediction - target
-        gradient = b.CBBFunc.calculateFeatureVector(board,self.coeff)
-        # print result for debugging
-        print("prediction: ", prediction)
-        print("target: " , reward, " + ", future_estimate)
-        print("weights: ", self.coeff)
-        print("gradient/feature vector: ", gradient)
-        print("update increment: ", self.eta*p_minus_t*gradient )
-        # TD-Learning update
-        new_coeff = self.coeff - self.eta*p_minus_t*gradient
-        if(not np.array_equal(new_coeff,self.coeff)): # non-trivial update
-            # Update Eta
-            print("updating eta!")
-            self.eta_updates += 1
-            self.eta = 1/(self.eta_updates)
-            self.coeff = new_coeff
-        print(self.coeff)
         # print move choice for human player to read
         printMove = b.f.posMovesToReadMoves(move)
         print("%s makes move: %d to %d" % (b.turn_to_string(board.turn),printMove[0],printMove[1]))
@@ -208,6 +169,29 @@ class Player:
         if sleepTime > 0:
             time.sleep(sleepTime)
         return b.move(board,move)
+    
+    def updateWeightsWithTDLearning(self,previousState,currentState):
+        prediction = previousState.feature_score(self.coeff)
+        reward = b.CBBFunc.game_end_reward(currentState)
+        targetScore = currentState.feature_score(self.coeff)
+        target = reward + targetScore
+        p_minus_t = prediction - target
+        gradient = b.CBBFunc.calculateFeatureVector(previousState,self.coeff)
+#        # print result for debugging
+#        print("prediction: ", prediction)
+#        print("target: " , reward, " + ", targetScore)
+#        print("weights: ", self.coeff)
+#        print("gradient/feature vector: ", gradient)
+#        print("update increment: ", self.eta*p_minus_t*gradient )
+        # TD-Learning update
+        new_coeff = self.coeff - self.eta*p_minus_t*gradient
+        if(not np.array_equal(new_coeff,self.coeff)): # non-trivial update
+            # Update Eta
+#            print("updating eta!")
+            self.eta_updates += 1
+            self.eta = 1/(self.eta_updates)
+            self.coeff = new_coeff
+#        print(self.coeff)
     
     def makeHumanMove(self,board):
         print("The available moves for this turn are:")

@@ -18,7 +18,7 @@ import time
 
 GAME = True
 DELAY = 0
-TURNS = 100
+TURNS = 150
 
 
 class Game:
@@ -26,36 +26,65 @@ class Game:
         self.P1 = P1
         self.P2 = P2
         self.current_board = board.Board(start_pos,show=True)
-        self.board_history = []
+        self.board_history = [copy(self.current_board)]
     
     def play(self):
         finished = False
-        turn = board.BLACK
         current_player = self.P1
         counter = 0
         start_time = time.time()
-        print(self.P1.coeff)
+#        print(self.P1.coeff)
+        learners = []
+        for p in [self.P1,self.P2]:
+            if p.agent == "TDLearning":
+                learners.append(p)
         while GAME is not finished:
-            self.board_history.append(self.current_board)
-            if turn == board.BLACK:
+            # ## Functionality ##
+            #
+            # If it's black's turn
+            #   player 1 makes the move
+            # If its red's turn
+            #   player 2 makes the move
+            # obtain the new state from the selected move
+            # record the new state
+            # If there are any learning agents
+            #   for each one
+            #       update the weights based on the new state and the 
+            #       prediction of the old state.
+            #
+            # if the game has reached the limit for turns
+            #   call it a draw
+            # if the game has been won (new state has no available moves)
+            #   it's a win for the player that just moved.
+            # 
+            # update the 'current' state, ready for the next iteration
+            # add 1 to the turn count
+
+            if self.current_board.turn == board.BLACK:
                 current_player = self.P1
-            elif turn == board.RED:
+            elif self.current_board.turn == board.RED:
                 current_player = self.P2                
             new_board = current_player.makeMove(self.current_board)
-            turn = new_board.getTurn()
-
-            self.current_board = copy(new_board)
-            if counter == TURNS:
+            self.board_history.append(new_board)
+            
+            if learners:
+                for learner in learners:
+                    learner.updateWeightsWithTDLearning(self.current_board,
+                                                        new_board)
+                            
+            if counter == TURNS: # draw
                 finished = True
                 winner = "DRAW"
                 print("DRAW")
                 print("Game length: %r turns over %.5f seconds" % (counter, (time.time() - start_time)))
-            elif self.current_board.availableMoves.size == 0:
+            elif new_board.availableMoves.size == 0: # game won
                 finished = True
-                winner = board.turn_to_string(self.board_history[-1].turn)
+                winner = board.turn_to_string(self.current_board.turn)
                 print("%s wins!" % winner)
                 print("Game length: %r turns over %.5f seconds" % (counter, (time.time() - start_time)))
-            counter += 1
+            else:
+                self.current_board = copy(new_board)
+                counter += 1
         return winner
 
 np.set_printoptions(linewidth=200,precision=2)
@@ -66,8 +95,8 @@ wins_list = []
 for i in range(0,1):
     g = Game(P1=P1,P2=P2)
     wins_list.append(g.play())
-learned_params = np.append(P1.eta_updates,P1.coeff)
-np.savetxt('TD_coeff.txt',learned_params,delimiter=',')
+#learned_params = np.append(P1.eta_updates,P1.coeff)
+#np.savetxt('TD_coeff.txt',learned_params,delimiter=',')
 
 
 # Kowalski, analysis

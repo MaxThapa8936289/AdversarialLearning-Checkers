@@ -88,15 +88,6 @@ def boolListToBin(lst):
 
 def printBin(x):
     print(bin(x)[2:].zfill(35))
-
-# DEPRECIATED
-#def randomPos2():
-#    temp = randomPos()
-#    am = boolPosToBin(temp==1)
-#    ak = boolPosToBin(temp==2)
-#    em = boolPosToBin(temp==-1)
-#    ek = boolPosToBin(temp==-2)
-#    return (am,ak,em,ek)
     
 def range_of_man(sq, piece_colour):
     """ Return a nested dict of integer values corresponding to the movements 
