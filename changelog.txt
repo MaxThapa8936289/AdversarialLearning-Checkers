@@ -1,0 +1,79 @@
+--08/08/2019--
+Change of turn reworked. Learning update made into seperate function.
+
+The changing of turns has been reworked so that it is more intuitive. Fortunately this allowed me to removed the change_sides function entirely from the object which, as discussed previously, was confusingly named.
+Instead, I have made liberal use of the object property turn to correctly calculate which pieces are the current player's and which are the opponenets.
+Furthermore, I have extracted the learning parameter update from the function the selects a move, and put it in a new function entirely. This allows it to be called at any time needed. The motivation was that, since the update was only happening when it was the TD Learner's turn, it was not able to update it's weights when it lost as it did not get the oppertunity to have another turn.
+My initial fix was to update the learner at the end of every turn, but this caused more problems. The present update contains these problems.
+I realised that I had not understood the theorey correctly, and the states between which the updates are to be made are not any consecutive game state, but specifically consecutive game states in which it is also the agent's turn. Next, I will be adjusting the updates to incoporate this correctly. I will also be adding a special case for the end of the game to allow a losing agent to learn correctly.
+
+--31/07/2019--
+Clean-up of labelling conventions.
+
+It's been a little while, but much progress has been made. Since my last update, I have analysed the Board state class carefully and discovered not two, but three conventions being used for labelling squares! What a nightmare. I have solidified a new strategy towards labelling which involves a Reading convention (R-convention) for human input and output to the screen for a human ONLY, and a Programming convention (P-convention) which is for everything else.
+I have detailed the comments and the docstrings in the code to reflect my more fundamental understanding and also to make the structure of the program make more sense.
+There is still work to be done. The way that turns are changed via the move function is very clunky and unintuitive, involving the 'change_sides' fucntion which absolutely does not do what it is named. I have developed a strategy to change this so that it is more pythonic, and will work as intended.
+Furthermore, the conversion from numpy-array to binary representiation seems theoretically correct, but is definitely still not functioning correctly. It will require some more sophisticated debugging, which I will investigate soon. I am looking forward to getting some answers.
+
+--20/07/2019--
+Human Player Added. Some Observations.
+
+A new agent has been added to the player class that allows a human to play. A little regex sure makes input verification easy! It's pretty basic, but it works just fine. Adding yet another agent type to the class made me realise that I should probably just be inheriting from a more abstract agent/player class. I will add this to the list of things to do in future. This allowed me to play some games against my agent. I hoped it would beat me, but i wiped the floor with it. In fact it still seemed pretty suicidal. It still cant be learning properly. 
+Some time has been spent ensuring the TD-Learning updates were coded correctly, I am now pretty certain that this is the case. Further observations revealed that the function approximation is to blame. The feature scores are not evaluating states correctly and possibly not even taking into account who's turn it is. Oh dear! 
+Something else to note is that there some space labelling discrepancies in the program. There exist two conventions - both of which are necessary - which label the squares. One for programming reasons and one for human reading reasons. Unfortunately I believe early on I implemented the conventions innapropriately. This is loosely related to how the feature scores are calculated, so while I am revising those I may rewrite the labelling system too. I hope this will be an oppertunity to make the program a little cleaner, but as bug fixing always does, it might take a little while
+
+--13/07/2019--
+Learning implemented.
+
+The player class has been modified to include a new agent type: 'TD_Learning'. This agent chooses a move based on it's current reward function (weights*features) then updates the weights with the TD learning algorithm. This involves adjusting the weights to closer match the estimated reward of the chosen move. The new agent can learn to beat a non-learning minimaxing agent consistently. The weight vector is stored in a .txt file between games so that the agent can access it even when reinitialised. Therefore, every game played now contributes to it's learning. If the parameters need to be reset, simply deleting the file will create a fresh one and reset any learning. Next time, I will implement another player agent type: 'Human'. This will alow an interface between the learning agent and a human player - then the learning gets interesting!
+
+--10/07/2019--
+Bug fixes for the alpha-beta pruning algorithm in the player class. 
+
+During debugging, I found an issue with the initial assignment of node values, leading to incorrect pruning. This has now been resolved and, as far as I can tell by following the algorithm line by line, it is now minimaxing and pruning correctly. Despite this, the agent is still terrible at checkers - in fact it is borderline suicidal! I am now inclined to believe that it is not the algorithm at fault, but the evalutation function. The weight vector was simply put together by me, a checkers novice, after all. I will proced to implement learning, and hopefully this amke the agent a better player.
+
+--07/07/2019--
+Back working on the program after two weeks away.
+
+I have begun implementing the new 'construct alpha beta pruned tree' algorithm into the player class. I have now integrated the algorithm, however some primitive tests indicate that the previous (and broken) minimax algorithm actually performs better at playing checkers. This is very concerning! Bugs will be investigated next time...
+
+--20/06/2019--
+Added consructAlphaBetaPrunedTree via upload
+
+In my previous update, I outlined the bug in the existing alpha-beta pruned minimax algorithm I had written: that it does not account for multiple moves in a single turn in the event of several pieces being taken. 
+
+Fortunately, it seems a simple solution exists. If I shift the dependancy of max or min from wither the move is finished to which players turn it is (which can be extracted from the state of the board at  particular node) then the algorithm should function correctly. 
+To take steps toward this, I decided to merge the two functions that alternately recursed into a single function with a conditional statement inside. The conditional statement currently still changes based on a transition, but the idea is that this conditional can then be modified.
+
+While rewriting, I abstracted and condensed the syntax, and now the function more closely resembles the Pseudo code from the Wikipedia article https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning . 
+
+This new file I am uploading is the general function and is tested on a minimal state class object defined at the top of the program. 
+
+My next task will be integrating this format back into my 'player' file and implementing the dependency on who's turn it is.
+
+--19/06/2019--
+Added update board, player and test files.
+
+The new player file now contains new calculateGameTreeWithMinMax and other related functions that combine the properties of the minmax algorithm with the calculateGameTree function. The tree is now minimaxed as it is built, instead of built entirely and iterated over in another function.
+This convolution was a step towards building calculateGameTreeWithMinMax2 which uses Alpha-Beta Pruning to streamline the algorithm. Instead of building a full tree and traversing it to minimax and pruning where appropriate, this approach stops the construction of prunable branches in the first place. 
+
+The board file was modified to include a test board for the new minimax algorithm. 
+The test file was used for debugging.
+
+Overall I have observed some improvements in speed that seem to increase with the ply of the search, which is as expected and good news.
+However, a bug has been discovered: the tree search algorithm assumes a move is equivalent to the end of a turn, which of course in checkers is often not the case. Handling multiple moves in a turn will will be my next task.
+
+
+--21/05/2019--
+Added the core files of the program.
+Board: Class to store state information. Contains functions to change states via the rules of checkers.
+
+CBBF: Organistional file. Cointains functions involving the representation of the board as a collection integers, upon which bitwise opertations are made.
+
+functions: Other functions written for the program, but could have other uses.
+
+player: a class to contain the machine learning agent for the program. Currently two agents: minimax and random.
+
+game: a class to house a game of checkers. Takes two agents as input, the two agents play checkers against one another by exchanging board states.
+
+minimax: self written minimax algorithm using an anytree object as input.
