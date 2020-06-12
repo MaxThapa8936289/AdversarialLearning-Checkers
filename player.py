@@ -4,6 +4,7 @@ import time
 import anytree as at
 import minimax as mnm
 from math import inf
+from math import sqrt
 from re import search
 
 # Player Class for Checkers game
@@ -26,6 +27,7 @@ class Player:
         self.name = name
         self.delay = delay
         self.agent = agent
+        self.storedState = None
         
         if self.agent in ["random","minimax","alphaBeta","human"]:
             self.coeff = COEFF
@@ -57,7 +59,7 @@ class Player:
         elif self.agent == "human":
             return self.makeHumanMove(board)
         elif self.agent == "TDLearning":
-            return self.makeAlphaBetaMove(board)
+            return self.makeAlphaBetaMoveAndLearn(board)
         else:
             raise ValueError("argument does not match a possible agent type: \
                              'random' or 'minimax' or 'alphaBeta' or 'TDLearning'")
@@ -80,7 +82,7 @@ class Player:
         if parent is None:
             return gameTree
 
-    def constructAlphaBetaPrunedCheckersTree(self,board,depth=2,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=True):
+    def constructAlphaBetaPrunedCheckersTree(self,board,depth=3,alpha=-inf,beta=+inf,thisNode=None,maximising=True,showAlphaBeta=True):
         if thisNode == None: # at root
             thisNode = at.Node("root")
         if depth == 0:
@@ -162,36 +164,48 @@ class Player:
         randindex = np.random.randint(1,len(best_move_nodes)) # 0th item is always root
         move = best_move_nodes[randindex].move
         # print move choice for human player to read
-        printMove = b.f.posMovesToReadMoves(move)
-        print("%s makes move: %d to %d" % (b.turn_to_string(board.turn),printMove[0],printMove[1]))
+        #printMove = b.f.posMovesToReadMoves(move)
+        #print("%s makes move: %d to %d" % (b.turn_to_string(board.turn),printMove[0],printMove[1]))
         # slow down turn
         sleepTime = self.delay - (time.time() - t)
         if sleepTime > 0:
             time.sleep(sleepTime)
         return b.move(board,move)
     
-    def updateWeightsWithTDLearning(self,previousState,currentState):
-        prediction = previousState.feature_score(self.coeff)
-        reward = b.CBBFunc.game_end_reward(currentState)
-        targetScore = currentState.feature_score(self.coeff)
-        target = reward + targetScore
-        p_minus_t = prediction - target
-        gradient = b.CBBFunc.calculateFeatureVector(previousState,self.coeff)
-#        # print result for debugging
-#        print("prediction: ", prediction)
-#        print("target: " , reward, " + ", targetScore)
-#        print("weights: ", self.coeff)
-#        print("gradient/feature vector: ", gradient)
-#        print("update increment: ", self.eta*p_minus_t*gradient )
-        # TD-Learning update
-        new_coeff = self.coeff - self.eta*p_minus_t*gradient
-        if(not np.array_equal(new_coeff,self.coeff)): # non-trivial update
-            # Update Eta
-#            print("updating eta!")
-            self.eta_updates += 1
-            self.eta = 1/(self.eta_updates)
-            self.coeff = new_coeff
-#        print(self.coeff)
+    def makeAlphaBetaMoveAndLearn(self,board):
+        # Update Learned Parameters
+        self.updateWeightsWithTDLearning(board)
+        # Make move
+        return self.makeAlphaBetaMove(board)
+    
+    def updateWeightsWithTDLearning(self,currentState):
+        if self.storedState is not None:
+            previousState = self.storedState
+            prediction = previousState.feature_score(self.coeff)
+            reward = b.CBBFunc.game_end_reward(currentState)
+            targetScore = currentState.feature_score(self.coeff)
+            target = reward + targetScore
+            p_minus_t = prediction - target
+            gradient = b.CBBFunc.calculateFeatureVector(previousState,self.coeff)
+            # print result for debugging
+            print("prediction: ", prediction)
+            print("target: " , reward, " + ", targetScore)
+            print("weights: ", self.coeff)
+            print("gradient/feature vector: ", gradient)
+            print("update increment: ", -1*self.eta*p_minus_t*gradient )
+            # TD-Learning update
+            new_coeff = self.coeff - self.eta*p_minus_t*gradient
+#            if (new_coeff != 0).any():
+#                new_coeff = new_coeff/np.mean(new_coeff)
+            if(not np.array_equal(new_coeff,self.coeff)): # non-trivial update
+                # Update Eta
+#               print("updating eta!")
+                self.eta_updates += 1
+                self.eta = 1/sqrt(self.eta_updates)
+                self.coeff = new_coeff
+#           print(self.coeff)
+                # Store State for learning
+        self.storedState = currentState
     
     def makeHumanMove(self,board):
         print("The available moves for this turn are:")

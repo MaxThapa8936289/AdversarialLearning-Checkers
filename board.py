@@ -32,7 +32,7 @@ import checkersBitBoardFunctions as CBBFunc
 #                      B . B . B . B .
 #                      . B . B . B . B
 #                      B . B . B . B .
-# Pieces nominally move by advancing in the direction of of the opposite wall. 
+# Pieces nominally move by advancing in the direction of the opposite wall. 
 # This is achieved with a sliding motion to a diagonally adjacent empty 
 # square. If a peice reaches the opposite end of the board, it is 'crowned'
 # and becomes a 'king' piece. Kings may move backward as well as forward, i.e.
@@ -42,7 +42,7 @@ import checkersBitBoardFunctions as CBBFunc
 # diagonally adjacent square and land in an empty square just beyond.
 #
 #       _ . _ . _       _ . _ . _      
-#       . _ . _ .       .  . B .
+#       . _ . _ .       . _ . B .
 #       _ . R . _  ->   _ . _ . _
 #       . B . _ .       . _ . _ .
 #
@@ -54,7 +54,7 @@ import checkersBitBoardFunctions as CBBFunc
 # available are they allowed to make a slide move.
 #
 # For communication purposes, a labelling convention of the tiles is introduced.
-# The usable squares are numbered by counting from 32 down to 1 follwing 
+# The usable squares are numbered by counting from 32 down to 1 following 
 # a reading-like motion.
 #                      . 32 . 31 . 30 . 29
 #                      28 . 27 . 26 . 25 .
@@ -77,7 +77,7 @@ for n in range(0,32):
     R_number_matrix.append(str(32-n))
     R_number_matrix.append('')
 R_number_matrix = np.array(R_number_matrix)    
-R_number_matrix = R_number_matrix.reshape(8,8) # reshape 1x32 to 8x8
+R_number_matrix = R_number_matrix.reshape(8,8) # reshape 1x64 to 8x8
 R_number_matrix[::2] = np.roll(R_number_matrix[::2],1,axis=1) # apply checkering
 
 ###############################################################################                      

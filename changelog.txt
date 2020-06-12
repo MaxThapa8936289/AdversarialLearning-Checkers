@@ -1,3 +1,12 @@
+--12/06/2020--
+Cleaned up version control. Fixed TDLearning updatign on enemy turns. 
+
+After heavily cleaning up the version control, I found an unsumarrised update of the program that contained a fix to the TD learning alogrithm. It now only updates on its own recorded states on it's own turn, and does not consider the opponent's move at all. This is more inline with the theorey, as the agent has no control over the opponent's move and so that is simply considered a part of the state change process upon picking an action. The opponent's moves are only explicitly considered during the construction of the game tree. 
+
+This update also contains some results of a 500 game run in which I first observed clear undeniable proof of learning in the agent. I can no longer be sure that this data is reproducable so I am not including it in this commit, however, using this update I will be runnning new test to see if I can reproduce the learning. 
+
+In any case, the version control is now sorted.
+
 --08/08/2019--
 Change of turn reworked. Learning update made into seperate function.
 
