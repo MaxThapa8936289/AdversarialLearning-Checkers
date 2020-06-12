@@ -187,7 +187,7 @@ def is_square(sq):
 # used in move() for identifying a crowning event.
 KINGS_ROW = {BLACK:(35,34,33,32), RED:(4,3,2,1)}
 
-def move(board,move,show=True):
+def move(board,move,show=False):
     """ Returns a new board object after making the move on the given board
     board (Board object) - the board sate to be operated on
     move (np.array or list, 2 integer elements only) - the move to be made from

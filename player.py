@@ -188,11 +188,11 @@ class Player:
             p_minus_t = prediction - target
             gradient = b.CBBFunc.calculateFeatureVector(previousState,self.coeff)
             # print result for debugging
-            print("prediction: ", prediction)
-            print("target: " , reward, " + ", targetScore)
-            print("weights: ", self.coeff)
-            print("gradient/feature vector: ", gradient)
-            print("update increment: ", -1*self.eta*p_minus_t*gradient )
+            # print("prediction: ", prediction)
+            # print("target: " , reward, " + ", targetScore)
+            # print("weights: ", self.coeff)
+            # print("gradient/feature vector: ", gradient)
+            # print("update increment: ", -1*self.eta*p_minus_t*gradient )
             # TD-Learning update
             new_coeff = self.coeff - self.eta*p_minus_t*gradient
 #            if (new_coeff != 0).any():

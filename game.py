@@ -100,7 +100,7 @@ P2 = player.Player(delay=DELAY,agent="alphaBeta")
 wins_list = []
 coefficient_history = []
 eta_history = []
-for i in range(0,1):
+for i in range(0,100):
     print("\n")
     print("GAME ", i+1)
     print("\n")
