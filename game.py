@@ -20,7 +20,7 @@ import time
 
 GAME = True
 DELAY = 0
-TURNS = 1000
+TURNS = 500
 
 
 class Game:
@@ -93,8 +93,6 @@ class Game:
                 counter += 1
         return winner
 
-np.set_printoptions(linewidth=200,precision=2)
-
 P1 = player.Player(delay=DELAY,agent="TDLearning")
 P2 = player.Player(delay=DELAY,agent="alphaBeta")
 wins_list = []
@@ -115,7 +113,8 @@ learned_params = np.append(P1.eta_updates,P1.coeff)
 np.savetxt('TD_coeff.txt',learned_params,delimiter=',')
 
 
-# Kowalski, analysis
+## Kowalski, analysis ########################################################
+# Wins 
 plt.figure(1)
 blk = wins_list.count("BLACK")
 red = wins_list.count("RED")
@@ -127,29 +126,29 @@ plt.bar(x,y)
 plt.xlabel('Winning Player')
 plt.ylabel('Win Frequency')
 
-
-plt.figure(2)
+# Final agent parameters
 function_names = []
 for function in board.CBBFunc.getFunctionList():
     function_names.append(board.f.extractFunctionNameFromStrPointer(str(function)))
-weights = P1.coeff
+P1_weights = P1.coeff
+
+plt.figure(2)
 plt.title("Player 1: Parameters")
-plt.bar(function_names,weights)
+plt.bar(function_names,P1_weights)
 plt.xticks(rotation='vertical')
 plt.xlabel('Feature Scores')
 plt.ylabel('Weight')
 
 plt.figure(3)
-function_names = []
-for function in board.CBBFunc.getFunctionList():
-    function_names.append(board.f.extractFunctionNameFromStrPointer(str(function)))
-weights = P2.coeff
+P2_weights = P2.coeff
 plt.title("Player 2: Parameters")
-plt.bar(function_names,weights)
+plt.bar(function_names,P2_weights)
 plt.xticks(rotation='vertical')
 plt.xlabel('Feature Scores')
 plt.ylabel('Weight')
 
+
+# Cumulative wins 
 plt.figure(4)
 cum_black_wins = np.cumsum(np_wins_list == "BLACK")
 cum_red_wins = np.cumsum(np_wins_list == "RED")
@@ -162,6 +161,7 @@ plt.plot( games, cum_draws, marker='o', markerfacecolor='grey', markersize=4, co
 plt.xlabel('Games finished')
 plt.ylabel('Cumulative Wins')
 
+# Change in weights
 fig = plt.figure(5)
 ax = fig.add_subplot(111)
 plt.title("Feature Weights after each game")
@@ -195,7 +195,7 @@ handles,labels = ax.get_legend_handles_labels()
 ax.legend(handles, labels, loc='upper right')
 ax.grid()
 
-
+# Change in eta
 plt.figure(6)
 plt.title("Eta Value after each game")
 plt.plot( games, eta_history, marker='o', markerfacecolor='k', markersize=2, color='k', linewidth=1)
@@ -210,4 +210,26 @@ plt.xlabel('Games finished')
 plt.ylabel('Coffecient Value')
 
 plt.show()
-np.set_printoptions(precision=None,linewidth=None)
+
+## Save Data to file #########################################################
+# Final parameters
+player1_params = np.zeros(len(P1_weights), dtype=[('var1', 'U25'), ('var2', float)])
+player1_params['var1'] = function_names
+player1_params['var2'] = P1_weights
+np.savetxt('player1_params.csv', player1_params, fmt="%s, %.18e")
+player2_params = np.zeros(len(P2_weights), dtype=[('var1', 'U25'), ('var2', float)])
+player2_params['var1'] = function_names
+player2_params['var2'] = P2_weights
+np.savetxt('player2_params.csv', player2_params, fmt="%s, %.18e")
+
+# Gameplay Data
+temp = np.vstack((eta_history,wins_list)).transpose()
+data = np.hstack((coefficient_history,temp))
+column_names = function_names + ["eta","winner"]
+ 
+from pandas import DataFrame
+gameplay_data = DataFrame(data, columns=column_names)
+gameplay_data.to_csv("gameplay_data.csv", index=False)
+
+
+
