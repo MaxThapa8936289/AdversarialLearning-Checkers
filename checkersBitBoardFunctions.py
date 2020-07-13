@@ -427,11 +427,11 @@ def deny_score(board,show_details=False):
     opposite direction to the move.)
     
     The origonal piece locations are used to determine the presence of a 
-    possible exchnge. 4 directions of capture each have 3 possible 
-    exchanges. ALL exchanges of the 3 must be impossible for the direction 
-    of capture to deny occupancy. If ANY direction of 
-    capture results in denied occupancy, the square is denied occupancy and
-    contributes 1 to the score.
+    possible exchange. 4 directions of capture each have 3 possible 
+    exchanges. ALL 3 potential exchanges must be impossible for the capture to 
+    proceed without denial of occupancy. Otherwise the square to be occupied 
+    after capture is denied of occupancy and therfore contributes 
+    1 to the total score.
     
     """
     

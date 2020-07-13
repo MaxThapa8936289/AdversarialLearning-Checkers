@@ -32,7 +32,7 @@ import checkersBitBoardFunctions as CBBFunc
 #                      B . B . B . B .
 #                      . B . B . B . B
 #                      B . B . B . B .
-# Pieces nominally move by advancing in the direction of of the opposite wall. 
+# Pieces nominally move by advancing in the direction of the opposite wall. 
 # This is achieved with a sliding motion to a diagonally adjacent empty 
 # square. If a peice reaches the opposite end of the board, it is 'crowned'
 # and becomes a 'king' piece. Kings may move backward as well as forward, i.e.
@@ -42,7 +42,7 @@ import checkersBitBoardFunctions as CBBFunc
 # diagonally adjacent square and land in an empty square just beyond.
 #
 #       _ . _ . _       _ . _ . _      
-#       . _ . _ .       .  . B .
+#       . _ . _ .       . _ . B .
 #       _ . R . _  ->   _ . _ . _
 #       . B . _ .       . _ . _ .
 #
@@ -54,7 +54,7 @@ import checkersBitBoardFunctions as CBBFunc
 # available are they allowed to make a slide move.
 #
 # For communication purposes, a labelling convention of the tiles is introduced.
-# The usable squares are numbered by counting from 32 down to 1 follwing 
+# The usable squares are numbered by counting from 32 down to 1 following 
 # a reading-like motion.
 #                      . 32 . 31 . 30 . 29
 #                      28 . 27 . 26 . 25 .
@@ -77,7 +77,7 @@ for n in range(0,32):
     R_number_matrix.append(str(32-n))
     R_number_matrix.append('')
 R_number_matrix = np.array(R_number_matrix)    
-R_number_matrix = R_number_matrix.reshape(8,8) # reshape 1x32 to 8x8
+R_number_matrix = R_number_matrix.reshape(8,8) # reshape 1x64 to 8x8
 R_number_matrix[::2] = np.roll(R_number_matrix[::2],1,axis=1) # apply checkering
 
 ###############################################################################                      
@@ -187,7 +187,7 @@ def is_square(sq):
 # used in move() for identifying a crowning event.
 KINGS_ROW = {BLACK:(35,34,33,32), RED:(4,3,2,1)}
 
-def move(board,move,show=True):
+def move(board,move,show=False):
     """ Returns a new board object after making the move on the given board
     board (Board object) - the board sate to be operated on
     move (np.array or list, 2 integer elements only) - the move to be made from
@@ -284,24 +284,60 @@ def move(board,move,show=True):
 # - a function to approximate the value of the state.
         
 class Board:
-    """ Class to hold information about the checkers game state. All information
-    about the game state can be derived from the positions of the pieces on the 
-    board, the current player's turn, and the legal moves available.
-    """
-    def __init__(self,pos=START_POS,turn=BLACK,show=False):
-        """ Initialiser function for the Board class. 
-        pos (np.array of integers, length 35) - An array of integers, in the 
-            range[-2,-1,0,1,2], where negative integers are the enemy pieces, 
-            postive integers are the allied pieces and zeros are empty squares.
-            Integers of magnitude 1 and 2 are the pieces of type man and king,
-            respectively. The imaginary squares will always be '0'.
-            Default is the game setup for a standard game.
-        turn (int, either 1 or -1) - 1 corresponds to black's turn. 
-            -1 corresponds to red's turn.
-        show (boolean) - if True, calls self.display() on object creation.
+    """ Represents a Checkers board in a particular state of play.
+    
+    Stores the piece positions as both an ndarray and as a binary string.
+    Calcualtes possible moves from the state.
+    
+    Attributes
+    ----------
+    pos : 1D numpy.ndarray (int)
+        Array of length 35 containing non-zero integers at the positions 
+        corresponding to the positions of squares on the board 
+        (P-Convention). Integers 1 and 2 correspond to pieces of type man 
+        and king, respectively. Positive integers correspond to black pieces,
+        negative integers are red pieces. 0s are empty tiles. 
+    turn : int, either 1 or -1
+        Integer representing which colour's turn is currently in play.
+        1 corresponds to black's turn. -1 corresponds to red's turn.
+    simpleMoves : 2D numpy.ndarray (int)
+        Pairs of integers corresponding to the moves that can be made by 
+        moving a piece to a diagonally adjacent empty tile (P-Convention). 
+    jumps : 2D numpy.ndarray (int)
+        Pairs of integers corresponding to the moves that can be made by 
+        capturing an enemy piece (P-Convention). 
+    available_moves : 2D numpy.ndarray (int)
+        Pairs of integers corresponding to the moves that can
+        be made by during the current state of play, according to the rules of
+        checkers. 
         
-        When the object is created, the pos array is also converted to binary 
-        representation and stored.
+    """
+    
+    def __init__(self,pos=START_POS,turn=BLACK,show=False):
+        """ Initialises a Board object representing a checkers board and the 
+        pieces in play.
+
+        Parameters
+        ----------
+        pos : 1D numpy.ndarray (int); optional
+            Array of length 35 containing non-zero integers at the positions 
+            corresponding to the positions of squares on the board 
+            (P-Convention). Integers 1 and 2 correspond to pieces of type man 
+            and king, respectively. Positive integers correspond to black pieces,
+            negative integers are red pieces. 0s are empty tiles.
+            The default is START_POS, the starting layout for a standard game.
+        turn : int, either 1 or -1; optional
+            Integer representing which colour's turn is currently in play.
+            1 corresponds to black's turn. -1 corresponds to red's turn. 
+            The default is 1.
+        show : BOOL, optional
+            If True, calls self.display() on object creation. 
+            The default is False.
+
+        Returns
+        -------
+        None.
+
         """
             
         self.pos = copy(pos)
@@ -314,7 +350,7 @@ class Board:
         if show:
             self.display()
         
-        # positions in binary representation
+        # Positions in binary representation
         if turn == RED:
             relative_pos = np.flip(pos) 
         if turn == BLACK:
@@ -339,7 +375,22 @@ class Board:
         return copy(self.turn)
     
     def display(self,trueNums=False,showMoves=False):
-        # Displays the board and the available moves
+        """ Generates a graphical representation of the board and plots it.
+
+        Parameters
+        ----------
+        trueNums : BOOL, optional
+            Debugging tool - prints the integer pieces on the board.
+            The default is False.
+        showMoves : BOOL, optional
+            Prints the list of moves for the current state to the console. 
+            The default is False.
+
+        Returns
+        -------
+        None.
+
+        """
         temp = f.posArrayToReadArray(self.pos)
         disp = np.zeros((64), dtype=np.int32)
         disp[::2] = temp
@@ -378,14 +429,20 @@ class Board:
         return self.occupation_of(sq) in [1*self.turn]
         
     def _getMoves(self):
-        """ Returns an ndarray of move doublets
-        The function calculates possible slide moves and
-        possible jumps regardless of the fact that that the availability of 
-        jump moves means that slide moves are illegal. 
-        This means moves made illegal by only that condition may still be 
-        inspected for analysis of the state.
+        """ Calculates all moves that can be made by the current turn.
         
+        Simple moves and jumps (i.e captures) are both calculated regardless 
+        of legality (this is required for feature evaluation).
+
+
+        Returns
+        -------
+        tuple, length 2
+            Tuple containing 2 elements which are both ndarrays:
+            the simple moves and the jumps.
+
         """
+        
         moves = []
         jumps = []
         # Get a list of squares occupied by men and kings
@@ -413,6 +470,7 @@ class Board:
         return (np.array(moves),np.array(jumps))
 
     def feature_score(self, coeff):
+        """ Returns the feature score of the state given a weight vector """
         return CBBFunc.calculateFeatureScore(self,coeff)
     
     
