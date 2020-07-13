@@ -14,4 +14,3 @@ functions.py - various associated functions for the operation of the program.
 checkersBitBoardFunctions.py - various functions required to make calculations and evaluations on the board BitBoard represenation.
 
 changelog.txt - Log of changes and updates to the project. 
-
