@@ -1,3 +1,6 @@
+--13/07/2020--
+Updated README. Deleted obselete files.
+
 --12/06/2020--
 Cleaned up version control. Fixed TDLearning updatign on enemy turns. 
 
